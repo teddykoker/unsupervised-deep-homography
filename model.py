@@ -31,14 +31,17 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.cnn = nn.Sequential(
             Block(2, 64, batch_norm),
+            Block(64, 64, batch_norm),
             Block(64, 128, batch_norm),
-            Block(128, 256, batch_norm),
-            Block(256, 256, batch_norm),
-            Block(256, 256, batch_norm),
-            Flatten(),
+            Block(128, 128, batch_norm),
         )
         self.fc = nn.Sequential(
-            nn.Linear(256 * 4 * 4, 4096), nn.ReLU(), nn.Linear(4096, 4 * 2),
+            Flatten(),
+            nn.Dropout(p=0.5),
+            nn.Linear(128 * 8 * 8, 1024),
+            nn.ReLU(),
+            nn.Dropout(p=0.5),
+            nn.Linear(1024, 4 * 2),
         )
 
     def forward(self, a, b):

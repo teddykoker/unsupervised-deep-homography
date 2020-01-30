@@ -8,11 +8,12 @@ from torchvision import transforms
 
 
 class SyntheticDataset(Dataset):
-    def __init__(self, folder, patch_size=128, rho=32):
+    def __init__(self, folder, filetype=".jpg", patch_size=128, rho=45):
         super(SyntheticDataset, self).__init__()
-        self.fnames = list(Path(folder).glob("*.jpg"))
+        self.fnames = list(Path(folder).glob(f"*{filetype}"))
         self.transforms = transforms.Compose(
             [
+                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
                 transforms.Grayscale(),
                 transforms.Resize(256),
                 transforms.CenterCrop(256),

@@ -4,6 +4,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import kornia
 import argparse
+from pathlib import Path
 
 from dataset import SyntheticDataset
 from model import Net
@@ -59,7 +60,7 @@ def valid_step(model, dataloader, device):
 
 def fit(opt):
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-    dataset = SyntheticDataset(opt.train_path)
+    dataset = SyntheticDataset(opt.train_path, filetype=opt.filetype)
     train_size = int(0.8 * len(dataset))
     train_set, valid_set = random_split(
         dataset, [train_size, len(dataset) - train_size]
@@ -69,13 +70,19 @@ def fit(opt):
 
     writer = SummaryWriter()
     model = Net().to(device)
+
+    if opt.resume:
+        print("resuming")
+        model.load_state_dict(torch.load(opt.model_path))
+
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
 
     for e in range(opt.epochs):
         train_loss = train_step(model, optimizer, train_loader, device, writer)
         valid_loss = valid_step(model, valid_loader, device)
         print(f"{e}\t{train_loss:.4f}\t{valid_loss:.4f}")
-        torch.save(model.state_dict(), f"models/model_{e}.pt")
+        torch.save(model.state_dict(), f"checkpoints/{e}.pt")
+    torch.save(model.state_dict(), opt.model_path)
 
 
 def test_dataset():
@@ -98,10 +105,15 @@ def test_dataset():
 
 
 if __name__ == "__main__":
+    Path("models").mkdir(exist_ok=True)
+    Path("checkpoints").mkdir(exist_ok=True)
     parser = argparse.ArgumentParser()
-    parser.add_argument("--bs", type=int, default=64, help="batch size")
-    parser.add_argument("--lr", type=float, default=1e-5, help="learning rate")
-    parser.add_argument("--epochs", type=int, default=100, help="number of epochs")
+    parser.add_argument("--bs", type=int, default=128, help="batch size")
+    parser.add_argument("--lr", type=float, default=3e-5, help="learning rate")
+    parser.add_argument("--epochs", type=int, default=200, help="number of epochs")
+    parser.add_argument("--filetype", default=".jpg", help="filetype of images")
+    parser.add_argument("--model_path", default="models/model.pt", help="path to model")
+    parser.add_argument("--resume", action="store_true", help="resume training")
     parser.add_argument("train_path", help="path to training data")
     opt = parser.parse_args()
     fit(opt)

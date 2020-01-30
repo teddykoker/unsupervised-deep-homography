@@ -27,8 +27,8 @@ The model can be trained using synthetic data, created from the
 
 ```bash
 python train.py \
-    --bs=64 \            # batch size
-    --lr=1e-5 \          # learning rate
-    --epochs=100 \       # number of epochs
+    --bs=128 \            # batch size
+    --lr=3e-5 \          # learning rate
+    --epochs=200 \       # number of epochs
     path/to/COCO/train/  # COCO training data
 ```
