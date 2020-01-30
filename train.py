@@ -1,9 +1,9 @@
 import torch
-
 from torch.utils.data import DataLoader, random_split
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import kornia
+import argparse
 
 from dataset import SyntheticDataset
 from model import Net
@@ -57,27 +57,25 @@ def valid_step(model, dataloader, device):
         return total_loss / size
 
 
-def fit(epochs):
+def fit(opt):
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-    dataset = SyntheticDataset(DATA_PATH)
+    dataset = SyntheticDataset(opt.train_path)
     train_size = int(0.8 * len(dataset))
     train_set, valid_set = random_split(
         dataset, [train_size, len(dataset) - train_size]
     )
-    train_loader = DataLoader(
-        train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=4
-    )
-    valid_loader = DataLoader(valid_set, batch_size=BATCH_SIZE, num_workers=4)
+    train_loader = DataLoader(train_set, batch_size=opt.bs, shuffle=True, num_workers=4)
+    valid_loader = DataLoader(valid_set, batch_size=opt.bs, num_workers=4)
 
     writer = SummaryWriter()
     model = Net().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+    optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
 
-    for e in range(epochs):
+    for e in range(opt.epochs):
         train_loss = train_step(model, optimizer, train_loader, device, writer)
         valid_loss = valid_step(model, valid_loader, device)
         print(f"{e}\t{train_loss:.4f}\t{valid_loss:.4f}")
-        torch.save(model.state_dict(), f"model_{e}.pt")
+        torch.save(model.state_dict(), f"models/model_{e}.pt")
 
 
 def test_dataset():
@@ -99,10 +97,13 @@ def test_dataset():
         plt.show()
 
 
-BATCH_SIZE = 64
-LR = 1e-5
-DATA_PATH = "/home/thomas/Data/train2017"
-
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--bs", type=int, default=64, help="batch size")
+    parser.add_argument("--lr", type=float, default=1e-5, help="learning rate")
+    parser.add_argument("--epochs", type=int, default=100, help="number of epochs")
+    parser.add_argument("train_path", help="path to training data")
+    opt = parser.parse_args()
+    fit(opt)
 
 # test_dataset()
-fit(100)
