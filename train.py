@@ -13,7 +13,8 @@ from model import Net
 def photometric_loss(delta, img_a, img_b, points):
     points_hat = points + delta
     h = kornia.get_perspective_transform(points, points_hat)
-    img_b_hat = kornia.warp_perspective(img_a, h, (256, 256))
+    h_inv = torch.inverse(h)
+    img_b_hat = kornia.warp_perspective(img_a, h_inv, (256, 256))
     return torch.mean(torch.abs(img_b_hat - img_b))
 
 
@@ -85,8 +86,8 @@ def fit(opt):
     torch.save(model.state_dict(), opt.model_path)
 
 
-def test_dataset():
-    dataset = SyntheticDataset(DATA_PATH)
+def test_dataset(path):
+    dataset = SyntheticDataset(path)
 
     img_a, img_b, patch_a, patch_b, points = dataset[0]
     print(img_a.shape)

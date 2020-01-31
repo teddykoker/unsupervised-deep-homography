@@ -49,8 +49,10 @@ class SyntheticDataset(Dataset):
             points.unsqueeze(0).float(), perturbed_points.unsqueeze(0).float()
         )
 
+        h_inv = torch.inverse(h)
+
         # apply homography to single img
-        img_b = kornia.warp_perspective(img_a.unsqueeze(0), h, (256, 256))[0]
+        img_b = kornia.warp_perspective(img_a.unsqueeze(0), h_inv, (256, 256))[0]
 
         patch_a = img_a[:, y : y + self.patch_size, x : x + self.patch_size]
         patch_b = img_b[:, y : y + self.patch_size, x : x + self.patch_size]
