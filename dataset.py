@@ -6,9 +6,12 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
+MEAN = torch.tensor([0.485, 0.456, 0.406]).mean().unsqueeze(0)
+STD = torch.tensor([0.229, 0.224, 0.225]).mean().unsqueeze(0)
+
 
 class SyntheticDataset(Dataset):
-    def __init__(self, folder, filetype=".jpg", patch_size=128, rho=45):
+    def __init__(self, folder, filetype=".jpg", patch_size=128, rho=32):
         super(SyntheticDataset, self).__init__()
         self.fnames = list(Path(folder).glob(f"*{filetype}"))
         self.transforms = transforms.Compose(
@@ -18,6 +21,7 @@ class SyntheticDataset(Dataset):
                 transforms.Resize(256),
                 transforms.CenterCrop(256),
                 transforms.ToTensor(),
+                transforms.Normalize(mean=MEAN, std=STD),
             ]
         )
         self.patch_size = patch_size
@@ -34,7 +38,7 @@ class SyntheticDataset(Dataset):
         x = random.randint(self.rho, 256 - self.rho - self.patch_size)
         y = random.randint(self.rho, 256 - self.rho - self.patch_size)
 
-        points = torch.tensor(
+        corners = torch.tensor(
             [
                 [x, y],
                 [x + self.patch_size, y],
@@ -42,11 +46,12 @@ class SyntheticDataset(Dataset):
                 [x, y + self.patch_size],
             ]
         )
-        perturbed_points = points + torch.randint_like(points, -self.rho, self.rho)
+        delta = torch.randint_like(corners, -self.rho, self.rho)
+        perturbed_corners = corners + delta
 
         # compute homography from points
         h = kornia.get_perspective_transform(
-            points.unsqueeze(0).float(), perturbed_points.unsqueeze(0).float()
+            corners.unsqueeze(0).float(), perturbed_corners.unsqueeze(0).float()
         )
 
         h_inv = torch.inverse(h)
@@ -57,4 +62,4 @@ class SyntheticDataset(Dataset):
         patch_a = img_a[:, y : y + self.patch_size, x : x + self.patch_size]
         patch_b = img_b[:, y : y + self.patch_size, x : x + self.patch_size]
 
-        return img_a, img_b, patch_a, patch_b, points.float()
+        return img_a, patch_a, patch_b, corners.float()

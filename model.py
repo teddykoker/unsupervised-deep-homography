@@ -8,7 +8,7 @@ class Flatten(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, inchannels, outchannels, batch_norm=True):
+    def __init__(self, inchannels, outchannels, batch_norm=True, pool=True):
         super(Block, self).__init__()
         layers = []
         layers.append(nn.Conv2d(inchannels, outchannels, kernel_size=3, padding=1))
@@ -19,7 +19,8 @@ class Block(nn.Module):
         layers.append(nn.ReLU())
         if batch_norm:
             layers.append(nn.BatchNorm2d(outchannels))
-        layers.append(nn.MaxPool2d(2, 2))
+        if pool:
+            layers.append(nn.MaxPool2d(2, 2))
         self.layers = nn.Sequential(*layers)
 
     def forward(self, x):
@@ -33,12 +34,12 @@ class Net(nn.Module):
             Block(2, 64, batch_norm),
             Block(64, 64, batch_norm),
             Block(64, 128, batch_norm),
-            Block(128, 128, batch_norm),
+            Block(128, 128, batch_norm, pool=False),
         )
         self.fc = nn.Sequential(
             Flatten(),
             nn.Dropout(p=0.5),
-            nn.Linear(128 * 8 * 8, 1024),
+            nn.Linear(128 * 16 * 16, 1024),
             nn.ReLU(),
             nn.Dropout(p=0.5),
             nn.Linear(1024, 4 * 2),

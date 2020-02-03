@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, random_split
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -10,28 +11,35 @@ from dataset import SyntheticDataset
 from model import Net
 
 
-def photometric_loss(delta, img_a, img_b, points):
-    points_hat = points + delta
-    h = kornia.get_perspective_transform(points, points_hat)
+def photometric_loss(delta, img_a, patch_b, corners):
+    corners_hat = corners + delta
+
+    # in order to apply transform and center crop,
+    # subtract points by top-left corner (corners[N, 0])
+    corners = corners - corners[:, 0].view(-1, 1, 2)
+
+    h = kornia.get_perspective_transform(corners, corners_hat)
+
     h_inv = torch.inverse(h)
-    img_b_hat = kornia.warp_perspective(img_a, h_inv, (256, 256))
-    return torch.mean(torch.abs(img_b_hat - img_b))
+    patch_b_hat = kornia.warp_perspective(img_a, h_inv, (128, 128))
+
+    # smooth l1 loss being used in tensorflow implementation
+    return F.smooth_l1_loss(patch_b_hat, patch_b)
 
 
 def train_step(model, optimizer, dataloader, device, writer):
     model.train()
     total_loss = 0.0
     size = len(dataloader.dataset)
-    for img_a, img_b, patch_a, patch_b, points in tqdm(dataloader, leave=False):
-        img_a, img_b, patch_a, patch_b, points = (
+    for img_a, patch_a, patch_b, corners in tqdm(dataloader, leave=False):
+        img_a, patch_a, patch_b, corners = (
             img_a.to(device),
-            img_b.to(device),
             patch_a.to(device),
             patch_b.to(device),
-            points.to(device),
+            corners.to(device),
         )
         delta = model(patch_a, patch_b)
-        loss = photometric_loss(delta, img_a, img_b, points)
+        loss = photometric_loss(delta, img_a, patch_b, corners)
         total_loss += loss.item() * img_a.size(0)
         loss.backward()
         optimizer.step()
@@ -45,16 +53,15 @@ def valid_step(model, dataloader, device):
     with torch.no_grad():
         total_loss = 0.0
         size = len(dataloader.dataset)
-        for img_a, img_b, patch_a, patch_b, points in tqdm(dataloader, leave=False):
-            img_a, img_b, patch_a, patch_b, points = (
+        for img_a, patch_a, patch_b, corners in tqdm(dataloader, leave=False):
+            img_a, patch_a, patch_b, corners = (
                 img_a.to(device),
-                img_b.to(device),
                 patch_a.to(device),
                 patch_b.to(device),
-                points.to(device),
+                corners.to(device),
             )
             delta = model(patch_a, patch_b)
-            loss = photometric_loss(delta, img_a, img_b, points)
+            loss = photometric_loss(delta, img_a, patch_b, corners)
             total_loss += loss.item() * img_a.size(0)
         return total_loss / size
 
