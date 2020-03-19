@@ -11,13 +11,12 @@ STD = torch.tensor([0.229, 0.224, 0.225]).mean().unsqueeze(0)
 
 
 class SyntheticDataset(Dataset):
-    def __init__(self, folder, filetype=".jpg", patch_size=128, rho=32):
+    def __init__(self, folder, filetype=".jpg", patch_size=128, rho=45):
         super(SyntheticDataset, self).__init__()
         self.fnames = list(Path(folder).glob(f"*{filetype}"))
         self.transforms = transforms.Compose(
             [
-                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
-                transforms.Grayscale(),
+                # transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
                 transforms.Resize(256),
                 transforms.CenterCrop(256),
                 transforms.ToTensor(),
@@ -33,6 +32,9 @@ class SyntheticDataset(Dataset):
     def __getitem__(self, index):
         img_a = Image.open(self.fnames[index])
         img_a = self.transforms(img_a)
+
+        # grayscale
+        img_a = torch.mean(img_a, dim=0, keepdim=True)
 
         # pick top left corner
         x = random.randint(self.rho, 256 - self.rho - self.patch_size)
@@ -62,4 +64,4 @@ class SyntheticDataset(Dataset):
         patch_a = img_a[:, y : y + self.patch_size, x : x + self.patch_size]
         patch_b = img_b[:, y : y + self.patch_size, x : x + self.patch_size]
 
-        return img_a, patch_a, patch_b, corners.float()
+        return img_a, patch_a, patch_b, corners.float(), delta.float()

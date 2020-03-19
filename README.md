@@ -15,6 +15,9 @@ This implementation leverages [kornia](https://github.com/kornia/kornia), an
 open source differentiable computer vision library. Kornia is used for computing
 the direct linear transform (DLT) as well as the spatial transformation.
 
+Uses [PyTorch Lighting](https://pytorch-lightning.readthedocs.io/en/latest/) for
+easy GPU training and reproducibility.
+
 `model.py`: Regression model implementation <br>
 `dataset.py`: Synthetic data generator <br>
 `train.py`: Train unsupervised model using photometric loss outlined in paper
@@ -26,9 +29,5 @@ The model can be trained using synthetic data, created from the
 [COCO](http://cocodataset.org/) dataset. 
 
 ```bash
-python train.py \
-    --bs=128 \            # batch size
-    --lr=3e-5 \          # learning rate
-    --epochs=200 \       # number of epochs
-    path/to/COCO/train/  # COCO training data
+python train.py path/to/COCO/train/ path/to/COCO/valid/
 ```

@@ -1,5 +1,22 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import kornia
+
+
+def photometric_loss(delta, img_a, patch_b, corners):
+    corners_hat = corners + delta
+
+    # in order to apply transform and center crop,
+    # subtract points by top-left corner (corners[N, 0])
+    corners = corners - corners[:, 0].view(-1, 1, 2)
+
+    h = kornia.get_perspective_transform(corners, corners_hat)
+
+    h_inv = torch.inverse(h)
+    patch_b_hat = kornia.warp_perspective(img_a, h_inv, (128, 128))
+
+    return F.l1_loss(patch_b_hat, patch_b)
 
 
 class Flatten(nn.Module):
@@ -8,7 +25,7 @@ class Flatten(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, inchannels, outchannels, batch_norm=True, pool=True):
+    def __init__(self, inchannels, outchannels, batch_norm=False, pool=True):
         super(Block, self).__init__()
         layers = []
         layers.append(nn.Conv2d(inchannels, outchannels, kernel_size=3, padding=1))
@@ -28,7 +45,7 @@ class Block(nn.Module):
 
 
 class Net(nn.Module):
-    def __init__(self, batch_norm=True):
+    def __init__(self, batch_norm=False):
         super(Net, self).__init__()
         self.cnn = nn.Sequential(
             Block(2, 64, batch_norm),
