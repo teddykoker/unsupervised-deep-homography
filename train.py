@@ -85,7 +85,7 @@ class HomographyModel(pl.LightningModule):
 
 
 def main(args):
-    if args.resume is not None:
+    if args.resume is not "":
         model = HomographyModel.load_from_checkpoint(args.resume)
     else:
         model = HomographyModel(hparams=args)
@@ -102,7 +102,9 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=100, help="number of epochs")
     parser.add_argument("--gpus", type=str, default="0")
     parser.add_argument("--rho", type=int, default=45, help="amount to perturb corners")
-    parser.add_argument("--resume", type=str, help="checkpoint to resume from")
+    parser.add_argument(
+        "--resume", type=str, help="checkpoint to resume from", default=""
+    )
     parser.add_argument("train_path", help="path to training imgs")
     parser.add_argument("valid_path", help="path to validation imgs")
     args = parser.parse_args()
