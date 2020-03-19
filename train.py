@@ -1,12 +1,19 @@
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, random_split
+from torch.utils.data.dataloader import default_collate
 
 import argparse
 import pytorch_lightning as pl
 
 from dataset import SyntheticDataset
 from model import Net, photometric_loss
+
+
+def safe_collate(batch):
+    """Return batch without any None values"""
+    batch = list(filter(lambda x: x is not None, batch))
+    return default_collate(batch)
 
 
 class HomographyModel(pl.LightningModule):
@@ -42,12 +49,21 @@ class HomographyModel(pl.LightningModule):
     def train_dataloader(self):
         train_set = SyntheticDataset(self.hparams.train_path, rho=self.hparams.rho)
         return DataLoader(
-            train_set, num_workers=4, batch_size=self.hparams.batch_size, shuffle=True
+            train_set,
+            num_workers=4,
+            batch_size=self.hparams.batch_size,
+            shuffle=True,
+            collate_fn=safe_collate,
         )
 
     def val_dataloader(self):
         val_set = SyntheticDataset(self.hparams.valid_path, rho=self.hparams.rho)
-        return DataLoader(val_set, num_workers=4, batch_size=self.hparams.batch_size)
+        return DataLoader(
+            val_set,
+            num_workers=4,
+            batch_size=self.hparams.batch_size,
+            collate_fn=safe_collate,
+        )
 
 
 # def test_dataset(path):
@@ -69,7 +85,10 @@ class HomographyModel(pl.LightningModule):
 
 
 def main(args):
-    model = HomographyModel(hparams=args)
+    if args.resume is not None:
+        model = HomographyModel.load_from_checkpoint(args.resume)
+    else:
+        model = HomographyModel(hparams=args)
     trainer = pl.Trainer(max_epochs=args.epochs, gpus=args.gpus)
     trainer.fit(model)
 
@@ -83,6 +102,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=100, help="number of epochs")
     parser.add_argument("--gpus", type=str, default="0")
     parser.add_argument("--rho", type=int, default=45, help="amount to perturb corners")
+    parser.add_argument("--resume", type=str, help="checkpoint to resume from")
     parser.add_argument("train_path", help="path to training imgs")
     parser.add_argument("valid_path", help="path to validation imgs")
     args = parser.parse_args()

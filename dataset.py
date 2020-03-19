@@ -51,12 +51,17 @@ class SyntheticDataset(Dataset):
         delta = torch.randint_like(corners, -self.rho, self.rho)
         perturbed_corners = corners + delta
 
-        # compute homography from points
-        h = kornia.get_perspective_transform(
-            corners.unsqueeze(0).float(), perturbed_corners.unsqueeze(0).float()
-        )
+        try:
+            # compute homography from points
+            h = kornia.get_perspective_transform(
+                corners.unsqueeze(0).float(), perturbed_corners.unsqueeze(0).float()
+            )
 
-        h_inv = torch.inverse(h)
+            h_inv = torch.inverse(h)
+        except:
+            # either matrix could not be solved or inverted
+            # this will show up as None, so use safe_collate in train.py
+            return
 
         # apply homography to single img
         img_b = kornia.warp_perspective(img_a.unsqueeze(0), h_inv, (256, 256))[0]
