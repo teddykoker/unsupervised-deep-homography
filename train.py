@@ -66,24 +66,6 @@ class HomographyModel(pl.LightningModule):
         )
 
 
-# def test_dataset(path):
-#     dataset = SyntheticDataset(path)
-#
-#     img_a, patch_a, patch_b, corners = dataset[0]
-#     print(img_a.shape)
-#     print(patch_a.shape)
-#
-#     import matplotlib.pyplot as plt
-#     from torchvision import transforms
-#     from dataset import MEAN, STD
-#
-#     to_pil = transforms.ToPILImage()
-#
-#     for img in [img_a, patch_a, patch_b]:
-#         plt.imshow(to_pil(img), cmap="gray")
-#         plt.savefig("test.png")
-
-
 def main(args):
     if args.resume is not "":
         model = HomographyModel.load_from_checkpoint(args.resume)
