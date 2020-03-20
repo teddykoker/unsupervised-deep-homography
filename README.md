@@ -25,6 +25,9 @@ easy GPU training and reproducibility.
 
 ### Training
 
+**Note: tested on PyTorch version 1.4.0; previous versions have a bug that cause
+`torch.inverse() and torch.solve()` to generate runtime errors.**
+
 The model can be trained using synthetic data, created from the
 [COCO](http://cocodataset.org/) dataset. 
 
