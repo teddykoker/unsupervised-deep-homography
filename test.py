@@ -43,7 +43,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", default="pretrained_coco.ckpt")
     parser.add_argument("--gpus", type=str, default="0")
-    parser.add_argument("--rho", type=int, default=30, help="amount to perturb corners")
+    parser.add_argument("--rho", type=int, default=20, help="amount to perturb corners")
     parser.add_argument("--n", type=int, default=5, help="number of images to test")
     parser.add_argument("test_path", help="path to test images")
     args = parser.parse_args()
