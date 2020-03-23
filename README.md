@@ -22,6 +22,26 @@ easy GPU training and reproducibility.
 `dataset.py`: Synthetic data generator <br>
 `train.py`: Train unsupervised model using photometric loss outlined in paper
 
+## Test
+
+Download pre-trained weights
+```bash
+bash download_weights.sh
+```
+
+Create gifs:
+```bash
+python test.py path/to/test/images
+```
+
+Input | Registered
+---   | ---
+![](figures/input_0.gif) | ![](figures/output_0.gif)
+![](figures/input_1.gif) | ![](figures/output_1.gif)
+![](figures/input_2.gif) | ![](figures/output_2.gif)
+![](figures/input_3.gif) | ![](figures/output_3.gif)
+![](figures/input_4.gif) | ![](figures/output_4.gif)
+
 
 ### Training
 
@@ -34,3 +54,4 @@ The model can be trained using synthetic data, created from the
 ```bash
 python train.py path/to/COCO/train/ path/to/COCO/valid/
 ```
+

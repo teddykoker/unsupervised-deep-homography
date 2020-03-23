@@ -1,5 +1,6 @@
 # Models
 *.pt
+*.ckpt
 
 # Tensorboard Logs
 runs/

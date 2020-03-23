@@ -6,14 +6,8 @@ from torch.utils.data.dataloader import default_collate
 import argparse
 import pytorch_lightning as pl
 
-from dataset import SyntheticDataset
+from dataset import SyntheticDataset, safe_collate
 from model import Net, photometric_loss
-
-
-def safe_collate(batch):
-    """Return batch without any None values"""
-    batch = list(filter(lambda x: x is not None, batch))
-    return default_collate(batch)
 
 
 class HomographyModel(pl.LightningModule):

@@ -10,6 +10,12 @@ MEAN = torch.tensor([0.485, 0.456, 0.406]).mean().unsqueeze(0)
 STD = torch.tensor([0.229, 0.224, 0.225]).mean().unsqueeze(0)
 
 
+def safe_collate(batch):
+    """Return batch without any None values"""
+    batch = list(filter(lambda x: x is not None, batch))
+    return default_collate(batch)
+
+
 class SyntheticDataset(Dataset):
     def __init__(self, folder, filetype=".jpg", patch_size=128, rho=45):
         super(SyntheticDataset, self).__init__()
