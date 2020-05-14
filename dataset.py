@@ -4,6 +4,7 @@ from pathlib import Path
 import kornia
 from PIL import Image
 from torch.utils.data import Dataset
+from torch.utils.data.dataloader import default_collate
 from torchvision import transforms
 
 MEAN = torch.tensor([0.485, 0.456, 0.406]).mean().unsqueeze(0)
