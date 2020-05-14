@@ -1,0 +1,7 @@
+kornia==0.2.0
+numpy==1.18.1
+pytorch_lightning==0.7.6rc1
+torchvision==0.6.0
+imageio==2.6.1
+torch==1.5.0
+Pillow==7.1.2
